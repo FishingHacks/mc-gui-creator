@@ -1,0 +1,393 @@
+:root {
+    color: white;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+
+    --background: #1f2937; /* gray-800 */
+    --section-border: #0f172a; /* slate-900 */
+    --section-bg: #374151; /* gray-700 */
+    --input-bg: #404040; /* neutral-700 */
+    --color-gray: #a3a3a3; /* neutral-400 */
+    --accent: #0ea5e9; /* sky-500 */
+    --accent-dark: #0075ac;
+    --input-border: #18181b; /* zinc-900 */
+    --hover-gray: #a1a1aa55;
+
+    --button-accent: var(--accent);
+    --button-blue: #1d4ed8; /* blue-700 */
+    --button-green: #2aac55;
+    --button-red: #b91c1c; /* red-700 */
+
+    --button-accent-hover: var(--accent-dark);
+    --button-blue-hover: #00369f;
+    --button-green-hover: #189547;
+    --button-red-hover: #9a0f14;
+
+    background-color: var(--background) !important;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+p {
+    margin: 0;
+}
+
+.main {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100vw;
+}
+
+.section-right {
+    width: calc(25vw - 1px);
+    height: 100vh;
+    border-width: 0px;
+    border-left-width: 1px;
+    border-style: solid;
+
+    background-color: var(--section-bg);
+    border-color: var(--section-border);
+}
+
+canvas {
+    image-rendering: pixelated;
+}
+
+.center-canvas {
+    max-width: 60vw;
+    max-height: 90vh;
+    margin: 0px 5em;
+}
+
+.center-canvas.scale-by-height {
+    height: 100%;
+}
+
+.center-canvas.scale-by-width {
+    width: 100%;
+}
+
+.section-heading {
+    margin: 0.5em;
+}
+
+.input-element {
+    padding-left: 0.5em;
+}
+
+.input-element label {
+    padding-right: 0.5em;
+    font-weight: 500;
+}
+
+.input-element input[type='string'],
+.input-element input[type='number'],
+.input-element button,
+.input-element select {
+    appearance: none;
+    width: calc(100% - 1em);
+    background-color: var(--input-bg);
+    outline: none !important;
+    /* border: #701a75 1px solid; fuchsia-900 */
+    border: var(--input-border) 1px solid;
+    border-radius: 2px;
+    color: white;
+    padding: 3px;
+}
+
+.input-element button,
+.input-element select {
+    cursor: pointer;
+}
+
+.input-element .select-container {
+    position: relative;
+}
+
+.input-element select + .dropdown-arrow {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    right: 0.5em;
+    padding-right: 0.2em;
+    height: 100%;
+    top: 0;
+    pointer-events: none;
+}
+
+.input-element select + .dropdown-arrow svg {
+    /* width: 100%; */
+    height: 50%;
+    pointer-events: none;
+    color: var(--color-gray);
+}
+
+.input-element button {
+    color: var(--color-gray);
+    text-align: start;
+}
+
+.input-element select {
+    width: calc(100% - 0.5em);
+}
+
+/* This does not work on my linux-based distro, but it might work on others, so i'll just keep it here! */
+.input-element select * {
+    background-color: var(--input-bg);
+    color: white;
+}
+
+.input-element div.file-div {
+    display: flex;
+    margin-right: 0.5em;
+}
+
+.input-element .file-input-x {
+    width: max-content;
+    margin-left: 0.5em;
+    margin-right: 0;
+    padding: 0.25em 0.5em;
+}
+
+.input-element button:focus,
+.input-element button:focus-visible,
+.input-element button:focus-within,
+.input-element button:active,
+.input-element input[type='string']:focus,
+.input-element input[type='string']:focus-visible,
+.input-element input[type='string']:focus-within,
+.input-element input[type='string']:active,
+.input-element input[type='number']:focus,
+.input-element input[type='number']:focus-visible,
+.input-element input[type='number']:focus-within,
+.input-element input[type='number']:active,
+.input-element select:focus,
+.input-element select:focus-visible,
+.input-element select:focus-within,
+.input-element select:active {
+    border-color: var(--accent);
+}
+
+.input-element input[type='number']::-webkit-inner-spin-button {
+    display: none;
+}
+
+.modal-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: all;
+    background-color: #0005;
+    z-index: 999;
+}
+
+.modal-container {
+    position: absolute;
+    width: 75vw;
+    height: 95vh;
+    top: 5vh;
+    left: 0px;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.modal {
+    width: var(--width, max-content);
+    height: var(--height, max-content);
+    max-width: 50vw;
+    max-height: 75vh;
+    background-color: var(--section-bg);
+    z-index: 999;
+    border-radius: 5px;
+    border: 2px var(--section-border) solid;
+    overflow: scroll;
+    pointer-events: all;
+}
+
+.modal-head {
+    width: calc(100% - 1em);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0.5em;
+}
+
+.modal-head h3 {
+    margin: 0 0.5em;
+}
+
+.modal-x.icon-button {
+    --width: 24px;
+    --height: 24px;
+}
+
+.modal-body {
+    padding: 1em;
+}
+
+.confirm-modal-button-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: end;
+    gap: 1em;
+    margin-top: 2em;
+}
+
+.element-preview-container {
+    padding: 1em;
+    display: flex;
+    flex-direction: row;
+    gap: 0.5em;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.element-preview {
+    width: 10em;
+    height: 12em;
+    overflow: hidden;
+    margin: 0.5em;
+    cursor: pointer;
+}
+
+.element-preview:hover,
+.element-preview:focus,
+.element-preview:focus-visible {
+    color: var(--accent); /* sky-500 */
+}
+
+.element-preview canvas.scale-by-height {
+    height: 10em;
+}
+
+.element-preview canvas.scale-by-width {
+    width: 10em;
+}
+
+.element-preview p {
+    margin: 0;
+    white-space: nowrap;
+    word-break: break-all;
+    width: 10em;
+    text-overflow: ellipsis;
+}
+
+.element-preview:hover p,
+.element-preview:focus p,
+.element-preview:focus-visible p {
+    text-decoration: underline;
+}
+
+.element-preview div {
+    display: flex;
+    height: 12em;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3em;
+    background-color: var(--section-bg);
+    border: var(--section-border) 0px solid;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    display: flex;
+    overflow: hidden;
+    flex-wrap: nowrap;
+    width: calc(75vw - 0.5em);
+    padding: 0 0.25em;
+}
+
+.icon-button {
+    all: unset;
+    display: block;
+    cursor: pointer;
+    transition: all 250ms ease-in-out;
+    border-radius: 5px;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    width: var(--width);
+    height: var(--height);
+}
+
+.icon-button svg {
+    height: var(--height);
+    width: var(--width);
+}
+
+.icon-button:hover,
+.icon-button:focus,
+.icon-button:focus-visible {
+    color: var(--accent);
+    background-color: var(--hover-gray);
+    transform: translateY(-3px);
+}
+
+.bottom-bar .icon-button {
+    --height: 1.5em;
+    --width: 1.5em;
+    margin: 0.5em 0.5em;
+    padding: 0.25em 0.25em;
+}
+
+.button {
+    padding: 0 1em;
+    width: 12em;
+    height: 2.5em;
+    font-weight: bold;
+    color: white;
+    --color: var(--button-accent);
+    --color-hover: var(--button-accent-hover);
+    background-color: var(--color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.button:hover {
+    background-color: var(--color-hover);
+}
+
+.unstyled-button {
+    all: unset;
+}
+
+kbd {
+    border: #424242 1px solid;
+    border-bottom-width: 2px;
+    color: white;
+    background-color: #2e2e2e;
+    font-family: Menlo, Monaco, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    line-height: 1.5;
+    font-weight: bold;
+    padding: 0.2em 0.3em;
+    font-size: .75rem;
+    border-radius: 4px;
+}
+
+.keybinds p {
+    padding: .05em 0;
+}
+
+.keybinds hr {
+    padding-left: 30rem;
+}
