@@ -130,3 +130,14 @@ export interface GuiCreatorApi {
 }
 
 export const API: GuiCreatorApi = (globalThis as any).api as GuiCreatorApi;
+export const registerElement = API.registerElement;
+export const createElement = API.createElement;
+export const getRegisteredElements = API.getRegisteredElements;
+export const getElement = API.getElement;
+export const try_fn = API.try_fn;
+export const async_try_fn = API.async_try_fn;
+export const DoubleElementRegisterError = API.DoubleElementRegisterError;
+export const getElementPreview = API.getElementPreview;
+export const validateMinSize = API.validateMinSize;
+export const minSizeValidator = API.minSizeValidator;
+export const defaultElements = API.defaultElements;
