@@ -17,6 +17,8 @@ import {
     minSizeValidator,
     Rect,
     registerElement,
+    unregisterElementsByPlugin,
+    validateIdentifier,
     validateMinSize,
 } from './elements';
 import * as elements from './elements/defaultElements';
@@ -65,15 +67,15 @@ function aliasedConsoleFunction(
 ): any {
     if (args.length < 1) return fn();
     if (typeof args[0] == 'string') {
-        args[0] = prefix + args[0];
+        args[0] = prefix + ' ' + args[0];
         return fn.apply(globalThis, args);
     } else {
-        return fn(prefix + '%s', ...args);
+        return fn(prefix, ...args);
     }
 }
 
 function aliasConsole(name: string) {
-    const prefix = `[${name}]: `;
+    const prefix = `[${name}]:`;
     const newConsole: Console = {} as any;
     for (const k in console) {
         (newConsole as any)[k] = aliasedConsoleFunction.bind(
@@ -99,7 +101,7 @@ export interface GuiCreatorApi {
         defaultSize: [number, number];
     }): Element<T>;
     getRegisteredElements(): Record<string, Element<Configs>>;
-    getElement(id: string): Element<Configs> | undefined;
+    getElement(id: string, plugin?: string): Element<Configs> | undefined;
     try_fn<T, TArgs extends any[]>(
         fn: ((...args: TArgs) => T | undefined) | undefined,
         ...args: TArgs
@@ -109,7 +111,7 @@ export interface GuiCreatorApi {
         ...args: TArgs
     ): Promise<T | undefined>;
     DoubleElementRegisterError: typeof DoubleElementRegisterError;
-    getElementPreview(id: string): ImageData | undefined;
+    getElementPreview(id: string, plugin?: string): ImageData | undefined;
     validateMinSize(
         minWidth: number,
         minHeight: number,
@@ -140,18 +142,6 @@ function createAPI(name: string): GuiCreatorApi {
     };
 }
 
-function validateName(name: string): boolean {
-    if (name.length < 6) return false;
-    if (!name.endsWith('.js')) return false;
-    for (let i = 0; i < name.length - 3; ++i) {
-        if (name[i] >= 'a' && name[i] <= 'z') continue;
-        if (name[i] >= 'A' && name[i] <= 'Z') continue;
-        if (name[i] == '-' || name[i] == '_') continue;
-        return false;
-    }
-    return true;
-}
-
 function stringifyError(error: any): string {
     if (typeof error == 'string') return error;
     if (error instanceof Error)
@@ -176,7 +166,7 @@ async function gotPlugins(plugins: [string, string][]) {
             | { type: 'success'; name: string }
             | { type: 'fail'; name: string; e: any }
         > {
-            if (!validateName(name))
+            if (!validateIdentifier(name))
                 return {
                     name,
                     type: 'fail',
@@ -196,6 +186,7 @@ async function gotPlugins(plugins: [string, string][]) {
                     __TAURI_PATTERN__: undefined,
                     __TAURI_POST_MESSAGE__: undefined,
                     extensionName: name,
+                    __filename__: name,
                     globalThis: undefined,
                     window: undefined,
                     api,
@@ -215,6 +206,7 @@ async function gotPlugins(plugins: [string, string][]) {
                 return { type: 'success', name };
             } catch (e) {
                 console.error('[%s]: Failed to load:\n%s', name, e);
+                unregisterElementsByPlugin(name);
                 return { type: 'fail', name, e };
             }
         })

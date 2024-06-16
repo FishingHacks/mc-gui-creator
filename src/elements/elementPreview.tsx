@@ -1,5 +1,5 @@
 import type { VNode } from 'preact';
-import { getElementPreview } from '.';
+import { getElementPreviewNamespaced } from '.';
 import { useEffect, useRef } from 'preact/hooks';
 
 export function ElementPreview({
@@ -9,7 +9,7 @@ export function ElementPreview({
     id: string;
     onClick?: () => void;
 }): VNode<any> | null {
-    const image = getElementPreview(id);
+    const image = getElementPreviewNamespaced(id);
     if (!image) return null;
     const ref = useRef<HTMLCanvasElement>(null);
 
@@ -30,7 +30,7 @@ export function ElementPreview({
                             : 'scale-by-width'
                     }
                 ></canvas>
-                <p>{id}</p>
+                <p>{id.substring(id.indexOf(':') + 1)}</p>
             </div>
         </button>
     );

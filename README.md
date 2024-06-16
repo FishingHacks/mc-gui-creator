@@ -14,6 +14,7 @@ TODO:
 - Load GUI: <kbd>Ctrl</kbd> + <kbd>O</kbd>
 - Create new GUI: <kbd>Ctrl</kbd> + <kbd>N</kbd>
 - Keybinds: <kbd>Ctrl</kbd> + <kbd>H</kbd>, <kbd>Ctrl</kbd> + <kbd>/</kbd>
+- Duplicate Element: <kbd>Ctrl</kbd> + <kbd>D</kbd>
 - Delete Element: <kbd>Delete</kbd>
 
 <hr />

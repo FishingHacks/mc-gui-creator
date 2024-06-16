@@ -97,7 +97,7 @@ export interface GuiCreatorApi {
         defaultSize: [number, number];
     }): Element<T>;
     getRegisteredElements(): Record<string, Element<Configs>>;
-    getElement(id: string): Element<Configs> | undefined;
+    getElement(id: string, plugin?: string): Element<Configs> | undefined;
     try_fn<T, TArgs extends any[]>(
         fn: ((...args: TArgs) => T | undefined) | undefined,
         ...args: TArgs
@@ -107,7 +107,7 @@ export interface GuiCreatorApi {
         ...args: TArgs
     ): Promise<T | undefined>;
     DoubleElementRegisterError: typeof Error;
-    getElementPreview(id: string): ImageData | undefined;
+    getElementPreview(id: string, plugin?: string): ImageData | undefined;
     validateMinSize(
         minWidth: number,
         minHeight: number,
@@ -141,3 +141,5 @@ export const getElementPreview = API.getElementPreview;
 export const validateMinSize = API.validateMinSize;
 export const minSizeValidator = API.minSizeValidator;
 export const defaultElements = API.defaultElements;
+export const __filename__ = (globalThis as any).__filename__ as string;
+export const extensionName = (globalThis as any).extensionName as string;

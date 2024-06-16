@@ -3,13 +3,13 @@ import type { Dispatch, Ref, StateUpdater } from 'preact/hooks';
 import './index.css';
 import type { CanvasElement, DiskFile as DiskFile } from './elements';
 import {
-    getElement,
+    getElementNamespaced,
     getRegisteredElements,
     newCanvasElement,
     renderCanvasElement,
 } from './elements';
 import { createRef, type VNode } from 'preact';
-import { LazyValue, try_fn } from './utils';
+import { clone, LazyValue, try_fn } from './utils';
 import { Input } from './Input';
 import { Dropdown } from './sharedComponents/Dropdown';
 import { RadioSelection } from './sharedComponents/RadioSelection';
@@ -47,7 +47,7 @@ function validateDimensions(data: GuiData, selected: number) {
     const id = selected < 0 ? data.baseElement.id : data.elements[selected]?.id;
     if (!id) return;
 
-    const element = getElement(id);
+    const element = getElementNamespaced(id);
     if (!element) return;
 
     if (selected < 0) {
@@ -131,7 +131,12 @@ function updateRefs(data: GuiData, selected: number, refs: Refs) {
 function newGuiData(): GuiData {
     return {
         elements: [],
-        baseElement: newCanvasElement('emptyInventoryElement', '', 0, 0)!,
+        baseElement: newCanvasElement(
+            'creator:emptyInventoryElement',
+            '',
+            0,
+            0
+        )!,
     };
 }
 
@@ -232,7 +237,7 @@ function CreateNewModal({ id }: ModalElementProps<{}>) {
     const inputHeightRef = useRef<HTMLInputElement>(null);
 
     function getDimensions(): [number, number] {
-        const defaultConfig = try_fn(getElement(elementId)?.default);
+        const defaultConfig = try_fn(getElementNamespaced(elementId)?.default);
         if (!defaultConfig) {
             closeModal(id);
             return [0, 0];
@@ -264,7 +269,7 @@ function CreateNewModal({ id }: ModalElementProps<{}>) {
                         return;
                     }
                     const rect = try_fn(
-                        getElement(elementId)?.validateDimensions,
+                        getElementNamespaced(elementId)?.validateDimensions,
                         { x: 0, y: 0, width: number, height: dimensions[1] }
                     );
                     if (!rect) {
@@ -290,7 +295,7 @@ function CreateNewModal({ id }: ModalElementProps<{}>) {
                         return;
                     }
                     const rect = try_fn(
-                        getElement(elementId)?.validateDimensions,
+                        getElementNamespaced(elementId)?.validateDimensions,
                         { x: 0, y: 0, width: dimensions[0], height: number }
                     );
                     if (!rect) {
@@ -309,9 +314,11 @@ function CreateNewModal({ id }: ModalElementProps<{}>) {
                 possibleValues={Object.keys(getRegisteredElements())}
                 value={elementId}
                 onChange={(element, selected) => {
-                    if (!getElement(selected))
+                    if (!getElementNamespaced(selected))
                         return (element.value = elementId);
-                    const newRect = try_fn(getElement(selected)?.default);
+                    const newRect = try_fn(
+                        getElementNamespaced(selected)?.default
+                    );
                     if (!newRect) return (element.value = elementId);
                     setElementId(selected);
                     setDimensions([newRect.width, newRect.height]);
@@ -331,7 +338,8 @@ function CreateNewModal({ id }: ModalElementProps<{}>) {
                         baseElement.dimensions.width = dimensions[0];
                         baseElement.dimensions.height = dimensions[1];
                         const newDimensions = try_fn(
-                            getElement(baseElement.id)?.validateDimensions,
+                            getElementNamespaced(baseElement.id)
+                                ?.validateDimensions,
                             baseElement.dimensions
                         );
                         if (!newDimensions) return;
@@ -378,12 +386,12 @@ export function onGetGuiData(data: GuiData) {
         const missingElements = [
             'Missing Elements (Are all required plugins loaded?):',
         ];
-        if (!getElement(data.baseElement.id))
+        if (!getElementNamespaced(data.baseElement.id))
             missingElements.push(
                 `Unknown Element for the Base Element: ${data.baseElement.id}`
             );
         for (let i = 0; i < data.elements.length; ++i)
-            if (!getElement(data.elements[i].id))
+            if (!getElementNamespaced(data.elements[i].id))
                 missingElements.push(
                     `Unknown Element for Element #${i}${
                         data.elements[i].name.length > 0
@@ -496,6 +504,16 @@ export default function App() {
                 data.elements.splice(idx, 1);
                 setSelected(undefined);
                 setData(data);
+            }
+
+            if (ev.key == 'd' && ev.ctrlKey && selected.index >= 0) {
+                data.elements.push(clone(data.elements[selected.index]));
+                setData(data);
+                setSelected({
+                    index: data.elements.length - 1,
+                    offset: undefined,
+                });
+                ev.preventDefault();
             }
 
             const el =
@@ -832,7 +850,7 @@ function PluginLoadStatus() {
                 title='Click for error log'
                 onClick={() =>
                     openModal({
-                        title: 'Error Output',
+                        title: 'Plugin Loading Output',
                         children: PluginLoadModal,
                         data: {
                             loadStatus,
@@ -927,7 +945,7 @@ function ElementControls({
     }
     const el = selected >= 0 ? data.elements[selected] : data.baseElement;
 
-    const element = getElement(el.id);
+    const element = getElementNamespaced(el.id);
 
     if (!element) {
         // something went very wrong
@@ -1009,7 +1027,7 @@ function ElementControls({
                         possibleValues={Object.keys(getRegisteredElements())}
                         value={data.baseElement.id}
                         onChange={(el) => {
-                            if (!getElement(el.value)) return;
+                            if (!getElementNamespaced(el.value)) return;
                             const width = data.baseElement.dimensions.width;
                             const height = data.baseElement.dimensions.height;
                             const name = data.baseElement.name;

@@ -114,7 +114,7 @@ export function renderCanvasElement(
     context: CanvasRenderingContext2D,
     element: CanvasElement
 ) {
-    const actualElement = getElement(element.id);
+    const actualElement = getElementNamespaced(element.id);
     try {
         actualElement?.render(
             context,
@@ -132,12 +132,12 @@ export function renderCanvasElement(
 }
 
 export function newCanvasElement(
-    id: string,
+    namespaced_id: string,
     name: string,
     x: number,
     y: number
 ): CanvasElement | undefined {
-    const element = getElement(id);
+    const element = getElementNamespaced(namespaced_id);
     if (!element) return;
     const element_default = try_fn(element.default);
     if (!element_default) return;
@@ -150,7 +150,7 @@ export function newCanvasElement(
     }
 
     return {
-        id,
+        id: namespaced_id,
         name,
         data: clone(element_default.configuration),
         dimensions: {
@@ -193,25 +193,36 @@ export function validateMinSize(
 const elementRegistry: Record<string, Element<any>> = {};
 const renderedElementCache: Record<string, ImageData> = {};
 
-export function getElementPreview(id: string): ImageData | undefined {
-    if (id in renderedElementCache) return renderedElementCache[id];
-    const element = getElement(id);
+export function getElementPreviewNamespaced(namespaced_id: string): ImageData | undefined {
+    if (namespaced_id in renderedElementCache) return renderedElementCache[namespaced_id];
+    const element = getElementNamespaced(namespaced_id);
     if (!element) return;
     const element_default = try_fn(element.default);
     if (!element_default) return;
-    const rect: Rect = { x: 0, y: 0, width: element_default.width, height: element_default.height };
-    const canvas = document.createElement("canvas");
+    const rect: Rect = {
+        x: 0,
+        y: 0,
+        width: element_default.width,
+        height: element_default.height,
+    };
+    const canvas = document.createElement('canvas');
     canvas.width = rect.width;
     canvas.height = rect.height;
-    canvas.style.imageRendering = "pixelated";
-    const ctx = canvas?.getContext("2d");
+    canvas.style.imageRendering = 'pixelated';
+    const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
     ctx.imageSmoothingEnabled = false;
     if (!element.render) return;
     try_fn(element.render, ctx, rect, element_default.configuration);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    renderedElementCache[id] = imageData;
+    renderedElementCache[namespaced_id] = imageData;
     return imageData;
+}
+
+export function getElementPreview(id: string, plugin?: string): ImageData | undefined {
+    if (typeof plugin != 'undefined' && !validateIdentifier(plugin)) return;
+    if (!validateIdentifier(id)) return;
+    return getElementPreviewNamespaced(`${plugin}:${id}`);
 }
 
 /**
@@ -220,11 +231,20 @@ export function getElementPreview(id: string): ImageData | undefined {
  * @returns If found, the element, otherwise undefined.
  */
 export function getElement(
-    id: string
+    id: string,
+    plugin?: string
 ): Element<Configs> | undefined {
-    if (id in elementRegistry) {
-        return elementRegistry[id];
-    }
+    if (typeof plugin != 'undefined' && !validateIdentifier(plugin)) return;
+    if (!validateIdentifier(id)) return;
+    const realId = `${plugin ?? DEFAULT_ID}:${id}`;
+    if (realId in elementRegistry) return elementRegistry[realId];
+    return undefined;
+}
+
+export function getElementNamespaced(
+    namespaced_id: string
+): Element<Configs> | undefined {
+    if (namespaced_id in elementRegistry) return elementRegistry[namespaced_id];
     return undefined;
 }
 
@@ -244,23 +264,61 @@ export class DoubleElementRegisterError extends Error {
  *
  * @param id The ID of the element
  * @param element The actual element
- * @param registerer Who is registering the element (creator by default. The API-version of registerElement sets this automatically to the plugin thats registering the elements)
+ * @param plugin Who is registering the element (creator by default. The API-version of registerElement sets this automatically to the plugin thats registering the elements)
  */
 export function registerElement<T extends Configs>(
     id: string,
     element: Element<T>,
-    registerer?: string
+    plugin?: string
 ) {
-    if (id in elementRegistry) {
+    if (typeof plugin != 'string') plugin = DEFAULT_ID;
+    if (!validateIdentifier(plugin))
+        new Error(
+            'A Plugin name can only contain letters, ., - and _ and has to be at least 3 letters long'
+        );
+    if (!validateIdentifier(id))
+        new Error(
+            'An Identifier can only contain letters, ., - and _ and has to be at least 3 letters long'
+        );
+
+    const realId = `${plugin}:${id}`;
+    console.log('[%s]: Registering element %s!', plugin, id);
+
+    if (realId in elementRegistry) {
         throw new DoubleElementRegisterError(id);
     }
-    console.log('[%s]: Registering element %s!', registerer ?? DEFAULT_ID, id);
 
-    elementRegistry[id] = element;
+    elementRegistry[realId] = element;
+}
+
+export function unregisterElementsByPlugin(plugin: string) {
+    if (!validateIdentifier(plugin))
+        new Error(
+            'A Plugin name can only contain letters, ., - and _ and has to be at least 3 letters long'
+        );
+    plugin += ':';
+
+    for (const k in elementRegistry) {
+        if (k.startsWith(plugin)) {
+            delete elementRegistry[k];
+            delete renderedElementCache[k];
+        }
+    }
 }
 
 export function getRegisteredElements(): Record<string, Element<Configs>> {
     return elementRegistry;
+}
+
+export function validateIdentifier(name: string): boolean {
+    if (name.length < 3) return false;
+    for (let i = 0; i < name.length - 3; ++i) {
+        if (name[i] >= 'a' && name[i] <= 'z') continue;
+        if (name[i] >= 'A' && name[i] <= 'Z') continue;
+        if (name[i] == '-' || name[i] == '_' || name[i] == '.') continue;
+        return false;
+    }
+    return true;
 }
 
 export function createElement<T extends Configs>(value: {

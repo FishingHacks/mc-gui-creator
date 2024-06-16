@@ -330,9 +330,9 @@ canvas {
     cursor: pointer;
 }
 
-.bottom-bar button:hover,
-.bottom-bar button:focus,
-.bottom-bar button:focus-visible {
+.bottom-bar button:not(.icon-button):hover,
+.bottom-bar button:not(.icon-button):focus,
+.bottom-bar button:not(.icon-button):focus-visible {
     border: 2px var(--accent) solid;
     border-radius: 5px;
 }

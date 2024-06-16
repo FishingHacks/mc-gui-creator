@@ -7,6 +7,7 @@ export function Keybinds(_: ModalElementProps<{}>) {
         <p>Create new GUI: <kbd>Ctrl</kbd> + <kbd>N</kbd></p>
         <p>Keybinds: <kbd>Ctrl</kbd> + <kbd>H</kbd>, <kbd>Ctrl</kbd> + <kbd>/</kbd></p>
         <hr />
+        <p>Duplicate Element: <kbd>Ctrl</kbd> + <kbd>D</kbd></p>
         <p>Delete Element: <kbd>Delete</kbd></p>
         <hr />
         <p>Move Element Left: <kbd>←</kbd></p>
