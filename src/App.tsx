@@ -32,6 +32,11 @@ import {
 import { Button } from './sharedComponents/Button';
 import { Keybinds } from './Keybinds';
 import { load, resetLastLoadedLocation, save } from './saveLoadGui';
+import {
+    getPluginLoadStatus,
+    PluginLoadStatusError,
+    PluginLoadStatusSucesss as PluginLoadStatusSuccess,
+} from './main';
 
 export interface GuiData {
     baseElement: CanvasElement;
@@ -370,7 +375,9 @@ let refs: Refs = {
 
 export function onGetGuiData(data: GuiData) {
     try {
-        const missingElements = ["Missing Elements (Are all required plugins loaded?):"];
+        const missingElements = [
+            'Missing Elements (Are all required plugins loaded?):',
+        ];
         if (!getElement(data.baseElement.id))
             missingElements.push(
                 `Unknown Element for the Base Element: ${data.baseElement.id}`
@@ -385,7 +392,8 @@ export function onGetGuiData(data: GuiData) {
                     }: ${data.elements[i].id}`
                 );
 
-        if (missingElements.length > 1) return onDataLoadEncounteredError(missingElements.join('\n'));
+        if (missingElements.length > 1)
+            return onDataLoadEncounteredError(missingElements.join('\n'));
 
         validateDimensions(data, -1);
 
@@ -468,7 +476,7 @@ export default function App() {
             const modals = getModals();
             if (ev.key == 'Escape' && modals.length > 0)
                 return closeModal(modals[modals.length - 1].id);
-            
+
             if (modals.length > 0) return;
 
             if (ev.ctrlKey) {
@@ -478,8 +486,7 @@ export default function App() {
                     return ev.preventDefault(), openCreateModal();
                 if (ev.key == 'o')
                     return ev.preventDefault(), openLoadFileModal();
-                if (ev.key == 's')
-                    return ev.preventDefault(), save(data);
+                if (ev.key == 's') return ev.preventDefault(), save(data);
             }
 
             if (!selected) return;
@@ -761,7 +768,11 @@ export default function App() {
                 )}
             </div>
             <div className='bottom-bar'>
-                <button className='icon-button save' title='Save File' onClick={save.bind(globalThis, data)}>
+                <button
+                    className='icon-button save'
+                    title='Save File'
+                    onClick={save.bind(globalThis, data)}
+                >
                     <IconSave />
                 </button>
                 <button
@@ -785,9 +796,104 @@ export default function App() {
                 >
                     <IconKeybinds />
                 </button>
+                <PluginLoadStatus />
             </div>
         </div>
     );
+}
+
+function PluginLoadStatus() {
+    const loadStatus = getPluginLoadStatus();
+
+    if (loadStatus.type == 'loading')
+        return <h4 className='plugin-load-status'>Plugins Loading...</h4>;
+    else if (loadStatus.type == 'errored')
+        return (
+            <button
+                className='unstyled-button'
+                type='button'
+                title='Click for error log'
+                onClick={() =>
+                    openModal({
+                        title: 'Error Output',
+                        children: PluginLoadModal,
+                        data: { loadStatus },
+                    })
+                }
+            >
+                <h4 className='plugin-load-status'>Failed loading Plugins</h4>
+            </button>
+        );
+    else if (loadStatus.type == 'loaded')
+        return (
+            <button
+                className='unstyled-button'
+                type='button'
+                title='Click for error log'
+                onClick={() =>
+                    openModal({
+                        title: 'Error Output',
+                        children: PluginLoadModal,
+                        data: {
+                            loadStatus,
+                        },
+                    })
+                }
+            >
+                <h4 className='plugin-load-status'>
+                    Loaded {loadStatus.successful.length} plugins (+{' '}
+                    {loadStatus.errored.length} errored ones)
+                </h4>
+            </button>
+        );
+    return <h4 className='plugin-load-status'>Unknown</h4>;
+}
+
+function prefixWithIndentation(str: string): string {
+    return '> ' + str;
+}
+
+function PluginLoadModal({
+    loadStatus,
+}: ModalElementProps<{
+    loadStatus: PluginLoadStatusSuccess | PluginLoadStatusError;
+}>): VNode<any> {
+    if (loadStatus.type == 'errored')
+        return (
+            <pre className='code color-exception'>{loadStatus.exception}</pre>
+        );
+    else
+        return (
+            <pre className='code'>
+                Loaded:{' '}
+                {loadStatus.successful.length < 1 ? (
+                    <span className='color-none'>None</span>
+                ) : (
+                    loadStatus.successful.map((el) => (
+                        <span className='color-plugin'>{el}</span>
+                    ))
+                )}
+                {loadStatus.errored.length > 0
+                    ? '\nFailed to load ' +
+                      loadStatus.errored.length +
+                      (loadStatus.errored.length > 1 ? ' modules' : ' module') +
+                      '\nErrors:\n'
+                    : ''}
+                {loadStatus.errored.map((el) => (
+                    <>
+                        {'\n'}- <span className='color-plugin'>{el.name}</span>:
+                        {'\n'}
+                        <span className='color-exception'>
+                            {el.exception
+                                .split('\n')
+                                .map(prefixWithIndentation)
+                                .join('\n')}
+                        </span>
+                        {'\n'}
+                    </>
+                ))}
+            </pre>
+        );
 }
 
 function ElementControls({

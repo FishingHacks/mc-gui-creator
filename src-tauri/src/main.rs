@@ -4,7 +4,7 @@
 use std::{
     collections::HashMap,
     ffi::OsStr,
-    fs::read,
+    fs::{read, read_dir},
     path::{Path, PathBuf},
 };
 
@@ -19,57 +19,61 @@ static IMAGE_EXTENSIONS: &[&str] = &[
 
 #[tauri::command]
 fn open_file(window: tauri::Window) {
-    tauri::api::dialog::FileDialogBuilder::new()
+    let mut builder = tauri::api::dialog::FileDialogBuilder::new()
         .set_title("Select a File")
-        .add_filter("Image Files", IMAGE_EXTENSIONS)
-        .pick_file(move |file| match file {
-            Some(path) => {
-                let Some(filename) = path.file_name().and_then(|val| val.to_str()) else {
-                    return;
-                };
+        .add_filter("Image Files", IMAGE_EXTENSIONS);
 
-                let Some(extension) = path.extension() else {
-                    let _ = window.emit_all("file_selected", ());
-                    return;
-                };
-                let mime_type = if extension == "png" {
-                    "image/png"
-                } else if extension == "apng" {
-                    "image/apng"
-                } else if extension == "avif" {
-                    "image/avif"
-                } else if extension == "webp" {
-                    "image/webp"
-                } else if extension == "jpg"
-                    || extension == "jpeg"
-                    || extension == "jfif"
-                    || extension == "pjpeg"
-                    || extension == "pjp"
-                {
-                    "image/jpeg"
-                } else {
-                    let _ = window.emit_all("file_selected", ());
-                    return;
-                };
+    if let Ok(Some(path)) = get_my_home() {
+        builder = builder.set_directory(&path);
+    }
+    builder.pick_file(move |file| match file {
+        Some(path) => {
+            let Some(filename) = path.file_name().and_then(|val| val.to_str()) else {
+                return;
+            };
 
-                let mut base64_str = String::with_capacity(1024);
-                base64_str.push_str("data:");
-                base64_str.push_str(mime_type);
-                base64_str.push_str(";base64,");
-
-                let Ok(vec) = read(&path) else {
-                    let _ = window.emit_all("file_selected", ());
-                    return;
-                };
-
-                BASE64_STANDARD.encode_string(vec, &mut base64_str);
-
-                let _ = window.emit_all("file_selected", (filename.to_string(), base64_str));
-            }
-            None => {
+            let Some(extension) = path.extension() else {
                 let _ = window.emit_all("file_selected", ());
-            }
-        });
+                return;
+            };
+            let mime_type = if extension == "png" {
+                "image/png"
+            } else if extension == "apng" {
+                "image/apng"
+            } else if extension == "avif" {
+                "image/avif"
+            } else if extension == "webp" {
+                "image/webp"
+            } else if extension == "jpg"
+                || extension == "jpeg"
+                || extension == "jfif"
+                || extension == "pjpeg"
+                || extension == "pjp"
+            {
+                "image/jpeg"
+            } else {
+                let _ = window.emit_all("file_selected", ());
+                return;
+            };
+
+            let mut base64_str = String::with_capacity(1024);
+            base64_str.push_str("data:");
+            base64_str.push_str(mime_type);
+            base64_str.push_str(";base64,");
+
+            let Ok(vec) = read(&path) else {
+                let _ = window.emit_all("file_selected", ());
+                return;
+            };
+
+            BASE64_STANDARD.encode_string(vec, &mut base64_str);
+
+            let _ = window.emit_all("file_selected", (filename.to_string(), base64_str));
+        }
+        None => {
+            let _ = window.emit_all("file_selected", ());
+        }
+    });
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -205,9 +209,44 @@ fn load_file_error(window: tauri::Window, err: String) {
     let _ = window.emit_all("load-error", err);
 }
 
+#[tauri::command]
+fn load_plugins() -> Result<Vec<(String, String)>, String> {
+    let Ok(Some(mut path)) = get_my_home() else {
+        return Err("Could not find your home directory".to_string());
+    };
+    path.push(".mcfg_plugins");
+    let _ = std::fs::create_dir(&path);
+    Ok(read_dir(&path)
+        .map_err(|err| err.to_string())?
+        .map(|path| match path {
+            Err(e) => Err(e),
+            Ok(entry) => Ok(entry.path()),
+        })
+        .filter_map(|val| val.ok())
+        .filter(|path| match path.extension() {
+            None => false,
+            Some(ext) => ext == "js",
+        })
+        .map(|path| {
+            Some((
+                std::fs::read_to_string(&path).ok()?,
+                path.file_name()
+                    .and_then(|el| el.to_str())
+                    .map(str::to_string)?,
+            ))
+        })
+        .filter_map(|val| val)
+        .collect::<Vec<_>>())
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![open_file, save, load])
+        .invoke_handler(tauri::generate_handler![
+            open_file,
+            save,
+            load,
+            load_plugins
+        ])
         .on_window_event(|ev| match ev.event() {
             WindowEvent::FileDrop(FileDropEvent::Dropped(paths)) => {
                 if paths.len() < 1 {

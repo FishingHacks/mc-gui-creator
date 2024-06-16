@@ -8,6 +8,16 @@ export function try_fn<T, TArgs extends any[]>(
     } catch {}
 }
 
+export async function async_try_fn<T, TArgs extends any[]>(
+    try_val: ((...args: TArgs) => Promise<T> | undefined) | undefined,
+    ...args: TArgs
+): Promise<T | undefined> {
+    if (typeof try_val != 'function') return;
+    try {
+        return await try_val(...args);
+    } catch {}
+}
+
 export type ValueOrProvider<T> = T | (() => T);
 
 export function get<T>(

@@ -1,3 +1,4 @@
+import { DEFAULT_ID } from '../main';
 import { clone, try_fn, ValueOrProvider } from '../utils';
 
 /**
@@ -253,12 +254,12 @@ export function registerElement<T extends Configs>(
     if (id in elementRegistry) {
         throw new DoubleElementRegisterError(id);
     }
-    console.log('[%s]: Registering element %s!', registerer ?? 'creator', id);
+    console.log('[%s]: Registering element %s!', registerer ?? DEFAULT_ID, id);
 
     elementRegistry[id] = element;
 }
 
-export function getRegisteredElements(): Record<string, Element<any>> {
+export function getRegisteredElements(): Record<string, Element<Configs>> {
     return elementRegistry;
 }
 

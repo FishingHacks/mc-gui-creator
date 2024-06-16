@@ -1,3 +1,8 @@
+@font-face {
+    font-family: 'Poppins';
+    src: local('Poppins'), url(./assets/Poppins.ttf) format('truetype');
+}
+
 :root {
     color: white;
     width: 100vw;
@@ -5,6 +10,8 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
+
+    font-family: Poppins, Arial, Helvetica, sans-serif;
 
     --background: #1f2937; /* gray-800 */
     --section-border: #0f172a; /* slate-900 */
@@ -162,7 +169,6 @@ canvas {
 .input-element button:focus,
 .input-element button:focus-visible,
 .input-element button:focus-within,
-.input-element button:active,
 .input-element input[type='string']:focus,
 .input-element input[type='string']:focus-visible,
 .input-element input[type='string']:focus-within,
@@ -309,10 +315,26 @@ canvas {
     border-top-width: 1px;
     border-right-width: 1px;
     display: flex;
+    align-items: center;
     overflow: hidden;
     flex-wrap: nowrap;
     width: calc(75vw - 0.5em);
     padding: 0 0.25em;
+}
+
+.bottom-bar h4.plugin-load-status {
+    margin: 0;
+}
+
+.bottom-bar button {
+    cursor: pointer;
+}
+
+.bottom-bar button:hover,
+.bottom-bar button:focus,
+.bottom-bar button:focus-visible {
+    border: 2px var(--accent) solid;
+    border-radius: 5px;
 }
 
 .icon-button {
@@ -376,18 +398,41 @@ kbd {
     border-bottom-width: 2px;
     color: white;
     background-color: #2e2e2e;
-    font-family: Menlo, Monaco, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-family: Menlo, Monaco, ui-monospace, SFMono-Regular, Menlo, Monaco,
+        Consolas, 'Liberation Mono', 'Courier New', monospace;
     line-height: 1.5;
     font-weight: bold;
     padding: 0.2em 0.3em;
-    font-size: .75rem;
+    font-size: 0.75rem;
     border-radius: 4px;
 }
 
 .keybinds p {
-    padding: .05em 0;
+    padding: 0.05em 0;
 }
 
 .keybinds hr {
     padding-left: 30rem;
+}
+
+.code {
+    margin: 0;
+    white-space: pre-wrap;
+    padding: .5em;
+    border-radius: 5px;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-bg);
+}
+
+.color-exception {
+    color: #ef4444;
+}
+
+.color-none {
+    color: var(--color-gray);
+    font-style: italic;
+}
+
+.color-plugin {
+    color: #14b8a6; /* teal-500 */
 }
